@@ -1,0 +1,183 @@
+#!/bin/bash
+# Smart tool for task testing in Competitive Programming.
+#
+# Copyright (C) 2014 Herman Zvonimir Došilović
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# specify your C compiler
+GCC=gcc
+
+# specify your C++ compiler
+GPP=g++
+
+# specify your Ruby interpreter
+RUBY=ruby
+
+# specify your Python interpreter
+PYTHON=python
+
+# colors settings
+if [ "$EVC" == "true" ]; then
+  NC="\033[0m" # no color
+  R="\033[0;31m" # red
+  G="\033[0;32m" # green
+  Y="\033[0;33m" # yellow
+  GY="\033[0;37m" # light gray
+fi
+
+# find last modified .c, .cpp, .py or .rb file
+source=$(ls -tr *.{c,cpp,rb,py} 2> /dev/null | tail -n -1)
+# get file extension
+extension=${source##*.}
+# get file name
+name=${source%.*}
+
+# if no file found then cannot continue
+if [ "$source" == "" ]; then
+  printf "ev: no file for execution\n\n"
+  exit
+fi
+
+echo " - $source -"
+
+# if there is no 'test' directory
+if [ ! -d "test/$name/" ]; then
+  echo "* created test/$name/"
+  mkdir -p "test/$name"
+fi
+
+# if check if tests exists
+tests=$(ls "test/$name/$name".*.in 2> /dev/null)
+if [ "$tests" == "" ]; then
+  # create 2 input/output files
+  for case in {1..2}; do
+    touch "test/$name/$name.$case.in"
+    touch "test/$name/$name.$case.out"
+    echo "* created test/$name/$name.$case.in"
+    echo "* created test/$name/$name.$case.out"
+  done
+  echo
+  exit
+fi
+
+# compile source if c or cpp file
+if [ "$extension" == "c" ]; then
+  errors=$($GCC "$source" -o "$name" 2>&1> /dev/null)
+elif [ "$extension" == "cpp" ]; then
+  errors=$($GPP "$source" -o "$name" 2>&1> /dev/null)
+fi
+
+# if compile errors occured then cannot continue
+if [ "$errors" != "" ]; then
+  echo -e "${R}COMPILATION ERROR$NC"
+  echo "$errors"
+  echo
+  exit
+fi
+
+allAccepted=true
+
+# find every .in file
+for fin in "test/$name/$name".*.in; do
+
+  # from input file make output file with same format
+  fout=${fin%.*}.out
+
+  echo "* $fin:"
+
+  # skip empty input file
+  if [ ! -s "$fin" ]; then
+    printf "ev: file empty and skipped\n\n"
+    continue
+  fi
+
+  compareResults=false
+
+  # if output file exsists and is not user output is file
+  foutuser="/dev/stdout"
+  if [ -a "$fout" ] && [ -s "$fout" ]; then
+    foutuser=${fin%.*}.user.out
+    compareResults=true
+  fi
+
+  # use stdout as output if '!' on begining of output file
+  if [ -a "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "!" ]; then
+    compareResults=false
+    foutuser="/dev/stdout"
+  fi
+
+  # specifies what should be executed
+  execute=$source
+
+  # specify command and what file to execute
+  if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
+    command="./"
+    execute=$name
+  elif [ "$extension" == "rb" ]; then
+    command="$RUBY "
+  else
+    command="$PYTHON "
+  fi
+
+  # read line by line and send it to executing process
+  while read line; do
+    echo $line
+  done < "$fin" | $command"$execute" > "$foutuser" &
+
+  # get pid of executed program
+  pid=$!
+
+  # wait ev input process to finish - ignoring input time
+  while ps -p $(($pid - 1)) > /dev/null; do continue; done;
+
+  # measure time of running process
+  start=$(date +%s)
+  while ps -p $pid > /dev/null; do
+    end=$(date +%s)
+    diff=$(($end - $start))
+    if [ "$diff" -gt "1" ]; then
+      kill -SIGKILL $pid
+      wait $! 2> /dev/null
+      echo -e "${Y}TIME LIMIT EXCEEDED$NC"
+      compareResults=false
+      allAccepted=false
+      if [ "$foutuser" != "/dev/stdout" ]; then
+        rm "$foutuser"
+      fi
+    fi
+  done
+
+  # compare files if output is redirected to file
+  if [ $compareResults == true ]; then
+    cmp -s "$fout" "$foutuser"
+    if [ $? -eq 1 ]; then
+      echo -e "${R}WRONG ANSWER$NC"
+      echo -e "${GY}ev: check $foutuser for help$NC"
+      allAccepted=false
+    else
+      echo -e "${G}ACCEPTED$NC"
+      rm "$foutuser"
+    fi
+  fi
+
+  echo
+
+done
+
+# if user has everything correct delete created object file
+if [ $allAccepted == true ] && ([ "$extension" == "c" ] || [ "$extension" == "cpp" ]); then
+  rm "$name" 2> /dev/null
+fi
