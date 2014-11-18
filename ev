@@ -110,13 +110,16 @@ for fin in "test/$name/$name".*.in; do
   foutuser="/dev/stdout"
   if [ -a "$fout" ] && [ -s "$fout" ]; then
     foutuser=${fin%.*}.user.out
+    rm "$foutuser" 2> /dev/null
     compareResults=true
   fi
 
-  # use stdout as output if '!' on begining of output file
-  if [ -a "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "!" ]; then
+  # use stdout as output if '$' on begining of output file
+  if [ -a "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "$" ]; then
     compareResults=false
     foutuser="/dev/stdout"
+  elif [ -a "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "!" ]; then
+    compareResults=false
   fi
 
   # specifies what should be executed
@@ -171,6 +174,8 @@ for fin in "test/$name/$name".*.in; do
       echo -e "${G}ACCEPTED$NC"
       rm "$foutuser"
     fi
+  elif [ "$foutuser" != "/dev/stdout" ]; then
+    echo -e "${GY}check $foutuser$NC"
   fi
 
   echo
