@@ -8,6 +8,8 @@ print-status() {
   fi
 }
 
+EVC=false
+
 # Test run-file
 echo ' - run-file -'
 status=true
@@ -19,7 +21,7 @@ echo >> test/run-file/run-file.9.in
 echo "correct       " > test/run-file/run-file.9.out
 echo >> test/run-file/run-file.9.out
 echo >> test/run-file/run-file.9.out
-ev > test/run-file/actual-output
+ev | > /dev/null tee test/run-file/actual-output
 cmp -s test/run-file/actual-output test/run-file/expected-output
 if [ $? -eq 1 ]; then
   status=false
