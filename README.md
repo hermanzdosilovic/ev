@@ -5,7 +5,7 @@ Smart tool for task testing in Competitive Programming.
 
 Tutorial - How to use it?
 -------------------------
-_ev_ is a smart script can do a lot for you. To give you idea of how it works I prepared a short tutorial for you. I really recommend you to go thru this tutorial.
+_ev_ is a smart script that can do a lot for you. To give you idea of how it works I prepared a short tutorial for you. I really recommend you to go thru this tutorial.
 
 ###Get the tutorial
 
@@ -21,26 +21,26 @@ So basicly you need to copy or link `ev` script in some directory that is in you
 
 ###Install
 
-Choose any directory in which you will keep this project. In that directory execute these commands: 
-	
-	$ git clone git@github.com:hermanzdosilovic/ev.git
+Choose any directory in which you will keep this project. In that directory execute these commands:
+
+	$ git clone https://github.com/hermanzdosilovic/ev.git
 	$ cd ev
 	$ sudo chmod +x ev
 	$ sudo ln -s $(pwd)/ev /usr/local/bin/ev
 
 ###Get updates
-	
+
 In _ev_ project directory execute this command:
-	
+
 	$ git pull origin master
-		
+
 
 How to run
 ----------
 You always run _ev_ the same way.
-	
+
 	$ ev
-	
+
 And that is the beauty of it. Enjoy :)
 
 Testing _ev_ on your machine
@@ -50,12 +50,12 @@ If you want to be 100% sure that _ev_ works on your machine you can run tests fo
 1. You need to install _ev_. Follow [install instructions](https://github.com/hermanzdosilovic/ev#how-to-install-and-get-updates).
 2. In your _ev_ project open `test` folder in terminal.
 3. Start script `start.sh`:
-	
+
 		$ sudo chmod +x start.sh
 		$ ./start.sh
 
 If all tests passed you should see folowing output:
-	
+
 	- run-file -
 	PASSED
 	 - wa-leave -
@@ -66,7 +66,7 @@ If all tests passed you should see folowing output:
 	PASSED
 
 If some of the tests failed, please contact me so we can make _ev_ better. :)
- 
+
 
 Contributing
 ------------
