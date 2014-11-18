@@ -90,6 +90,17 @@ fi
 
 allAccepted=true
 
+# function removes blank lines and trailing spaces
+remove-blanks() {
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i "" 's/[[:space:]]*$//' "$1"
+    sed -i "" '/^[[:space:]]*$/d' "$1"
+  else
+    sed -i 's/[[:space:]]*$//' "$1"
+    sed -i '/^[[:space:]]*$/d' "$1"
+  fi
+}
+
 # find every .in file
 for fin in "test/$name/$name".*.in; do
 
@@ -102,6 +113,10 @@ for fin in "test/$name/$name".*.in; do
   if [ ! -s "$fin" ]; then
     printf "ev: file empty and skipped\n\n"
     continue
+  fi
+
+  if [ -a "$fout" ]; then
+    remove-blanks $fout
   fi
 
   compareResults=false
@@ -165,6 +180,7 @@ for fin in "test/$name/$name".*.in; do
 
   # compare files if output is redirected to file
   if [ $compareResults == true ]; then
+    remove-blanks $foutuser
     cmp -s "$fout" "$foutuser"
     if [ $? -eq 1 ]; then
       echo -e "${R}WRONG ANSWER$NC"
