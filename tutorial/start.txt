@@ -1,0 +1,19 @@
+Hi,
+in this tutorial I will try to teach you how does ev work. Lets start.
+
+If you still haven't, install ev on your computer.
+Follow these instructions to do that:
+https://github.com/hermanzdosilovic/ev#how-to-install-and-get-updates
+
+Open this tutorial folder in your terminal, we will do all the work here. Every
+time I say you to run ev, you are running it from this folder.
+
+Tutorial consists of 8 lessons.
+
+OK, First thing that we will learn is how to run ev. You run ev by typing 'ev'
+in your terminal (don't do it yet). And it is that simple. Every time you run it
+the same way.
+
+ev knows how to work with .c, .cpp, .rb and .py files. And every time you run ev
+it looks for last modified file and uses that file to work with. Let me show you
+what i mean by that. Please open basic.c file and follow instructions there.

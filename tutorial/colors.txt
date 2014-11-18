@@ -1,0 +1,25 @@
+By default ev is not using colorized output, but you can tell him to use it.
+
+Its simple. ev is looking for environment variable $EVC. If value of $EVC is
+'true' ev will use colorized output.
+
+You can set this variable in many ways. If you wish it to be permanent you can
+write following command in your ~/.profile script:
+
+  export EVC=true
+
+You can use any other script that sets this variable automaticly for you.
+
+
+Or you can type this command directly in your console and you will have
+colorized output for that console session.
+
+Once when you have this variable you can do things like this:
+  $ EVC=true
+  $ ev
+  $ EVC=false
+  $ ev
+
+Basicly you can toggle between colorized output.
+
+Please proceed with end.txt

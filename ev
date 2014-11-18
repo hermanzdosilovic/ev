@@ -109,23 +109,29 @@ for fin in "test/$name/$name".*.in; do
 
   echo "* $fin:"
 
+  # remove blank lines from input file
+  remove-blanks $fin
+
   # skip empty input file
   if [ ! -s "$fin" ]; then
     printf "ev: file empty and skipped\n\n"
     continue
   fi
 
+  # remove blank lines from output file
   if [ -a "$fout" ]; then
     remove-blanks $fout
   fi
 
   compareResults=false
 
-  # if output file exsists and is not user output is file
+  # remove old user out
+  rm ${fin%.*}.user.out 2> /dev/null
+
+  # if output file exists and is not empty output is file
   foutuser="/dev/stdout"
   if [ -a "$fout" ] && [ -s "$fout" ]; then
     foutuser=${fin%.*}.user.out
-    rm "$foutuser" 2> /dev/null
     compareResults=true
   fi
 
@@ -162,6 +168,7 @@ for fin in "test/$name/$name".*.in; do
   while ps -p $(($pid - 1)) > /dev/null; do continue; done;
 
   # measure time of running process
+  tle=false
   start=$(date +%s)
   while ps -p $pid > /dev/null; do
     end=$(date +%s)
@@ -172,6 +179,7 @@ for fin in "test/$name/$name".*.in; do
       echo -e "${Y}TIME LIMIT EXCEEDED$NC"
       compareResults=false
       allAccepted=false
+      tle=true
       if [ "$foutuser" != "/dev/stdout" ]; then
         rm "$foutuser"
       fi
@@ -190,7 +198,7 @@ for fin in "test/$name/$name".*.in; do
       echo -e "${G}ACCEPTED$NC"
       rm "$foutuser"
     fi
-  elif [ "$foutuser" != "/dev/stdout" ]; then
+  elif [ "$foutuser" != "/dev/stdout" ] && [ $tle == false ]; then
     echo -e "${GY}check $foutuser$NC"
   fi
 
