@@ -1,0 +1,5 @@
+ - wa-leave.c -
+* test/wa-leave/wa-leave.1.in:
+WRONG ANSWER
+ev: check test/wa-leave/wa-leave.1.user.out for help
+

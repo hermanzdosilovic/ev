@@ -110,7 +110,7 @@ for fin in "test/$name/$name".*.in; do
   echo "* $fin:"
 
   # remove blank lines from input file
-  remove-blanks $fin
+  remove-blanks "$fin"
 
   # skip empty input file
   if [ ! -s "$fin" ]; then
@@ -119,8 +119,8 @@ for fin in "test/$name/$name".*.in; do
   fi
 
   # remove blank lines from output file
-  if [ -a "$fout" ]; then
-    remove-blanks $fout
+  if [ -e "$fout" ]; then
+    remove-blanks "$fout"
   fi
 
   compareResults=false
@@ -130,16 +130,16 @@ for fin in "test/$name/$name".*.in; do
 
   # if output file exists and is not empty output is file
   foutuser="/dev/stdout"
-  if [ -a "$fout" ] && [ -s "$fout" ]; then
+  if [ -e "$fout" ] && [ -s "$fout" ]; then
     foutuser=${fin%.*}.user.out
     compareResults=true
   fi
 
   # use stdout as output if '$' on begining of output file
-  if [ -a "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "$" ]; then
+  if [ -e "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "$" ]; then
     compareResults=false
     foutuser="/dev/stdout"
-  elif [ -a "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "!" ]; then
+  elif [ -e "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "!" ]; then
     compareResults=false
   fi
 
@@ -188,7 +188,7 @@ for fin in "test/$name/$name".*.in; do
 
   # compare files if output is redirected to file
   if [ $compareResults == true ]; then
-    remove-blanks $foutuser
+    remove-blanks "$foutuser"
     cmp -s "$fout" "$foutuser"
     if [ $? -eq 1 ]; then
       echo -e "${R}WRONG ANSWER$NC"
