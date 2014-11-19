@@ -13,7 +13,7 @@ EVC=false
 # Test run-file
 echo ' - run-file -'
 status=true
-rm test/run-file/*.user.out
+rm test/run-file/*.user.out &> /dev/null
 touch -m run-file.c
 echo "ignore-blanks     " > test/run-file/run-file.9.in
 echo >> test/run-file/run-file.9.in
@@ -40,7 +40,7 @@ rm test/run-file/actual-output
 # Test wa-leave
 echo ' - wa-leave -'
 status=true
-rm test/wa-leave/*.user.out
+rm test/wa-leave/*.user.out &> /dev/null
 touch -m wa-leave.c
 ev > test/wa-leave/actual-output
 cmp -s test/wa-leave/actual-output test/wa-leave/expected-output
