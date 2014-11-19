@@ -38,8 +38,8 @@ if [ "$EVC" == "true" ]; then
   GY="\033[0;37m" # light gray
 fi
 
-# find last modified .c, .cpp, .py or .rb file
-source=$(ls -tr *.{c,cpp,rb,py} 2> /dev/null | tail -n -1)
+# find last modified .c, .cpp, .py, .rb or .java file
+source=$(ls -tr *.{c,cpp,rb,py,java} 2> /dev/null | tail -n -1)
 # get file extension
 extension=${source##*.}
 # get file name
@@ -78,6 +78,8 @@ if [ "$extension" == "c" ]; then
   errors=$($GCC "$source" -o "$name" 2>&1> /dev/null)
 elif [ "$extension" == "cpp" ]; then
   errors=$($GPP "$source" -o "$name" 2>&1> /dev/null)
+elif [ "$extension" == "java" ]; then
+  errors=$(javac "$source" 2>&1> /dev/null)
 fi
 
 # if compile errors occured then cannot continue
@@ -150,6 +152,9 @@ for fin in "test/$name/$name".*.in; do
   if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
     command="./"
     execute=$name
+  elif [ "$extension" == "java" ]; then
+    command="java "
+    execute=$name
   elif [ "$extension" == "rb" ]; then
     command="$RUBY "
   else
@@ -207,6 +212,10 @@ for fin in "test/$name/$name".*.in; do
 done
 
 # if user has everything correct delete created object file
-if [ $allAccepted == true ] && ([ "$extension" == "c" ] || [ "$extension" == "cpp" ]); then
-  rm "$name" 2> /dev/null
+if [ $allAccepted == true ]; then
+  if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
+    rm "$name" 2> /dev/null
+  elif [ "$extension" == "java" ]; then
+    rm "$name".class
+  fi
 fi
