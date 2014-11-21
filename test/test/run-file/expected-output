@@ -2,9 +2,6 @@
 * test/run-file/run-file.1.in:
 ACCEPTED
 
-* test/run-file/run-file.2.in:
-ev: file empty and skipped
-
 * test/run-file/run-file.3.in:
 this is what you see
 

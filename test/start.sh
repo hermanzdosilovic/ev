@@ -84,10 +84,18 @@ rm "test/space in c name/actual-output"
 # Test JavaTest
 echo ' - JavaTest -'
 status=true
+rm test/JavaTest/*.user.out &> /dev/null
 touch -m JavaTest.java
 ev | > /dev/null tee test/JavaTest/actual-output
 cmp -s test/JavaTest/expected-output test/JavaTest/actual-output
 if [ $? -eq 1 ] || [ ! -e "JavaTest.class" ]; then
+  status=false
+fi
+if [ -e "test/JavaTest/JavaTest.6.user.out" ]; then
+  if [ "$(ls -l test/JavaTest/*.user.out | wc -l | sed 's/ *//g')" != "1" ]; then
+    status=false
+  fi
+else
   status=false
 fi
 print-status $status

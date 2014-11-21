@@ -11,3 +11,7 @@ TIME LIMIT EXCEEDED
 * test/JavaTest/JavaTest.4.in:
 ACCEPTED
 
+* test/JavaTest/JavaTest.6.in:
+WRONG ANSWER
+ev: check test/JavaTest/JavaTest.6.user.out for help
+
