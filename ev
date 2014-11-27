@@ -89,6 +89,8 @@ if [ "$errors" != "" ]; then
   echo "$errors"
   echo
   exit
+elif [ "$extension" == "java" ]; then
+  cp "$name.class" "test/$name/"
 fi
 
 # function removes blank lines and trailing spaces from given file
@@ -102,17 +104,37 @@ remove-blanks() {
   fi
 }
 
-allAccepted=true
-for fin in "test/$name/$name".*.in; do
-  # from official input file make output file with same format
-  fout=${fin%.*}.out
+# specify command and what file to execute
+if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
+  command="./"
+  execute="../../$name"
+elif [ "$extension" == "java" ]; then
+  command="java "
+  execute=$name
+elif [ "$extension" == "rb" ]; then
+  command="$RUBY "
+  execute="../../$source"
+else
+  command="$PYTHON "
+  execute="../../$source"
+fi
 
+allAccepted=true
+filter="^(.*\.|.{0})in(\..*|.{0})$"
+replace="s/^in\./out./;s/\.in\./.out./;s/\.in$/.out/"
+
+cd "test/$name/"
+for fin in *; do
+  if [ "$(echo $fin | grep -E "$filter")" == "" ]; then
+    continue
+  fi
+
+  # from official input file make output file with same format
+  fout="$(echo $fin | sed $replace )"
 
   remove-blanks "$fin"
   # skip empty input file
   if [ ! -s "$fin" ]; then
-    # echo "ev: file empty and skipped"
-    # echo
     continue
   fi
 
@@ -126,14 +148,14 @@ for fin in "test/$name/$name".*.in; do
   compareResults=false
 
   # remove old user out if exists
-  rm ${fin%.*}.user.out 2> /dev/null
+  rm "$fout.user" 2> /dev/null
 
   # by default output is console stdout
   foutuser="/dev/stdout"
 
   # if output file exists and is not empty, then output is to .user file
   if [ -e "$fout" ] && [ -s "$fout" ]; then
-    foutuser=${fin%.*}.user.out
+    foutuser="$fout.user"
     compareResults=true
   fi
 
@@ -148,21 +170,6 @@ for fin in "test/$name/$name".*.in; do
     foutuser="/dev/stdout"
   elif [ -e "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "!" ]; then
     compareResults=false
-  fi
-
-  # specify command and what file to execute
-  if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
-    command="./"
-    execute=$name
-  elif [ "$extension" == "java" ]; then
-    command="java "
-    execute=$name
-  elif [ "$extension" == "rb" ]; then
-    command="$RUBY "
-    execute=$source
-  else
-    command="$PYTHON "
-    execute=$source
   fi
 
   # if reading from file
@@ -230,11 +237,17 @@ for fin in "test/$name/$name".*.in; do
 
 done
 
+if [ "$extension" == "java" ]; then
+  rm "$name.class"
+fi
+
+cd ../../
+
 # if user has everything correct delete created object file
 if [ $allAccepted == true ]; then
   if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
     rm "$name" 2> /dev/null
   elif [ "$extension" == "java" ]; then
-    rm "$name".class
+    rm "$name.class"
   fi
 fi

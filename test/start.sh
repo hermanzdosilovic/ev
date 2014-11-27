@@ -13,7 +13,7 @@ EVC=false
 # Test run-file
 echo ' - run-file -'
 status=true
-rm test/run-file/*.user.out &> /dev/null
+rm test/run-file/*.out.user &> /dev/null
 touch -m run-file.c
 echo "ignore-blanks     " > test/run-file/run-file.9.in
 echo >> test/run-file/run-file.9.in
@@ -26,8 +26,8 @@ cmp -s test/run-file/actual-output test/run-file/expected-output
 if [ $? -eq 1 ]; then
   status=false
 fi
-if [ -e "test/run-file/run-file.5.user.out" ] && [ -e "test/run-file/run-file.5.user.out" ]; then
-  if [ "$(ls -l test/run-file/*.user.out | wc -l | sed 's/ *//g')" != "2" ]; then
+if [ -e "test/run-file/run-file.5.out.user" ] && [ -e "test/run-file/run-file.5.out.user" ]; then
+  if [ "$(ls -l test/run-file/*.out.user | wc -l | sed 's/ *//g')" != "2" ]; then
     status=false
   fi
 else
@@ -40,14 +40,14 @@ rm test/run-file/actual-output
 # Test wa-leave
 echo ' - wa-leave -'
 status=true
-rm test/wa-leave/*.user.out &> /dev/null
+rm test/wa-leave/*.out.user &> /dev/null
 touch -m wa-leave.c
 ev | > /dev/null tee test/wa-leave/actual-output
 cmp -s test/wa-leave/actual-output test/wa-leave/expected-output
 if [ $? -eq 1 ]; then
   status=false
 fi
-if [ ! -e "test/wa-leave/wa-leave.1.user.out" ]; then
+if [ ! -e "test/wa-leave/wa-leave.1.out.user" ]; then
   status=false
 fi
 if [ ! -e "wa-leave" ]; then
@@ -84,15 +84,15 @@ rm "test/space in c name/actual-output"
 # Test JavaTest
 echo ' - JavaTest -'
 status=true
-rm test/JavaTest/*.user.out &> /dev/null
+rm test/JavaTest/*.out.user &> /dev/null
 touch -m JavaTest.java
 ev | > /dev/null tee test/JavaTest/actual-output
 cmp -s test/JavaTest/expected-output test/JavaTest/actual-output
 if [ $? -eq 1 ] || [ ! -e "JavaTest.class" ]; then
   status=false
 fi
-if [ -e "test/JavaTest/JavaTest.6.user.out" ]; then
-  if [ "$(ls -l test/JavaTest/*.user.out | wc -l | sed 's/ *//g')" != "1" ]; then
+if [ -e "test/JavaTest/JavaTest.6.out.user" ]; then
+  if [ "$(ls -l test/JavaTest/*.out.user | wc -l | sed 's/ *//g')" != "1" ]; then
     status=false
   fi
 else
@@ -100,4 +100,3 @@ else
 fi
 print-status $status
 rm test/JavaTest/actual-output
-rm JavaTest.class
