@@ -61,7 +61,7 @@ if [ ! -d "test/$name/" ]; then
 fi
 
 # check if tests exists
-tests=$(ls "test/$name/$name".*.in 2> /dev/null)
+tests=$(ls "test/$name/" 2> /dev/null)
 if [ "$tests" == "" ]; then
   # create 2 input/output files
   for case in {1..2}; do
