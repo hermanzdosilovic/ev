@@ -18,7 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # specify your C compiler
-GCC=gcc
+GCC="gcc -std=gnu99"
 
 # specify your C++ compiler
 GPP=g++
@@ -48,28 +48,6 @@ name=${source%.*}
 # if no file found then cannot continue
 if [ "$source" == "" ]; then
   echo "ev: no file for execution"
-  echo
-  exit
-fi
-
-echo " - $source -"
-
-# if there is no 'test' directory
-if [ ! -d "test/$name/" ]; then
-  echo "* created test/$name/"
-  mkdir -p "test/$name"
-fi
-
-# check if tests exists
-tests=$(ls "test/$name/" 2> /dev/null)
-if [ "$tests" == "" ]; then
-  # create 2 input/output files
-  for case in {1..2}; do
-    touch "test/$name/$name.$case.in"
-    echo "* created test/$name/$name.$case.in"
-    touch "test/$name/$name.$case.out"
-    echo "* created test/$name/$name.$case.out"
-  done
   echo
   exit
 fi
@@ -107,16 +85,48 @@ remove-blanks() {
 # specify command and what file to execute
 if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
   command="./"
-  execute="../../$name"
+  execute="$name"
 elif [ "$extension" == "java" ]; then
   command="java "
   execute=$name
 elif [ "$extension" == "rb" ]; then
   command="$RUBY "
-  execute="../../$source"
+  execute="$source"
 else
   command="$PYTHON "
-  execute="../../$source"
+  execute="$source"
+fi
+
+if [[ $1 == "-r" ]]; then
+  $command"$execute"
+  exit
+elif [[ $1 != "" ]]; then
+  echo "ev: unknown argument $1"
+  exit
+elif [[ "$extension" != "java" ]]; then
+  execute="../../""$execute"
+fi
+
+echo " - $source -"
+
+# if there is no 'test' directory
+if [ ! -d "test/$name/" ]; then
+  echo "* created test/$name/"
+  mkdir -p "test/$name"
+fi
+
+# check if tests exists
+tests=$(ls "test/$name/" 2> /dev/null)
+if [ "$tests" == "" ]; then
+  # create 2 input/output files
+  for case in {1..2}; do
+    touch "test/$name/$name.$case.in"
+    echo "* created test/$name/$name.$case.in"
+    touch "test/$name/$name.$case.out"
+    echo "* created test/$name/$name.$case.out"
+  done
+  echo
+  exit
 fi
 
 allAccepted=true
