@@ -18,7 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # specify your C compiler
-GCC="gcc -std=gnu99"
+GCC=gcc
 
 # specify your C++ compiler
 GPP=g++
@@ -48,13 +48,13 @@ name=${source%.*}
 # if no file found then cannot continue
 if [ "$source" == "" ]; then
   echo "ev: no file for execution"
-  echo
   exit
 fi
 
 # if there is specified "compile and run" comment, then use it
 custom="$(cat "$source" | grep -E -m 1 "compile and run: " | cut -d ":" -f 2 | sed "s/\*\///;s/^ *//")"
 if [[ $custom != "" && $1 == "-r" ]]; then
+  echo " - $source -"
   echo $custom | bash
   exit
 fi
@@ -72,7 +72,6 @@ fi
 if [ "$errors" != "" ]; then
   echo -e "${R}COMPILATION ERROR$NC"
   echo "$errors"
-  echo
   exit
 elif [ "$extension" == "java" ]; then
   cp "$name.class" "test/$name/"
@@ -95,6 +94,7 @@ fi
 
 # chech for fast run argument
 if [[ $1 == "-r" ]]; then
+  echo " - $source -"
   $command"$execute"
   exit
 elif [[ $1 != "" ]]; then
@@ -133,7 +133,6 @@ if [ "$tests" == "" ]; then
     touch "test/$name/$name.$case.out"
     echo "* created test/$name/$name.$case.out"
   done
-  echo
   exit
 fi
 

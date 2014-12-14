@@ -100,3 +100,4 @@ else
 fi
 print-status $status
 rm test/JavaTest/actual-output
+rm JavaTest.class
