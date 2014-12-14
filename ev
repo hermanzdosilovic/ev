@@ -52,6 +52,13 @@ if [ "$source" == "" ]; then
   exit
 fi
 
+# if there is specified "compile and run" comment, then use it
+custom="$(cat "$source" | grep -E -m 1 "compile and run: " | cut -d ":" -f 2 | sed "s/\*\///;s/^ *//")"
+if [[ $custom != "" && $1 == "-r" ]]; then
+  echo $custom | bash
+  exit
+fi
+
 # compile source if c, cpp or java file
 if [ "$extension" == "c" ]; then
   errors=$($GCC "$source" -o "$name" 2>&1> /dev/null)
@@ -71,17 +78,6 @@ elif [ "$extension" == "java" ]; then
   cp "$name.class" "test/$name/"
 fi
 
-# function removes blank lines and trailing spaces from given file
-remove-blanks() {
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i "" 's/[[:space:]]*$//' "$1"
-    sed -i "" '/^[[:space:]]*$/d' "$1"
-  else
-    sed -i 's/[[:space:]]*$//' "$1"
-    sed -i '/^[[:space:]]*$/d' "$1"
-  fi
-}
-
 # specify command and what file to execute
 if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
   command="./"
@@ -97,6 +93,7 @@ else
   execute="$source"
 fi
 
+# chech for fast run argument
 if [[ $1 == "-r" ]]; then
   $command"$execute"
   exit
@@ -106,6 +103,17 @@ elif [[ $1 != "" ]]; then
 elif [[ "$extension" != "java" ]]; then
   execute="../../""$execute"
 fi
+
+# function removes blank lines and trailing spaces from given file
+remove-blanks() {
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i "" 's/[[:space:]]*$//' "$1"
+    sed -i "" '/^[[:space:]]*$/d' "$1"
+  else
+    sed -i 's/[[:space:]]*$//' "$1"
+    sed -i '/^[[:space:]]*$/d' "$1"
+  fi
+}
 
 echo " - $source -"
 
