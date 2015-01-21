@@ -34,7 +34,7 @@ else
   status=false
 fi
 print-status $status
-rm run-file
+rm run-file.out
 rm test/run-file/actual-output
 
 # Test wa-leave
@@ -54,7 +54,7 @@ if [ ! -e "wa-leave" ]; then
   status=false
 fi
 print-status $status
-rm wa-leave
+rm wa-leave.out
 rm test/wa-leave/actual-output
 
 # Test space in py or rb name

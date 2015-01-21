@@ -61,9 +61,9 @@ fi
 
 # compile source if c, cpp or java file
 if [ "$extension" == "c" ]; then
-  errors=$($GCC "$source" -o "$name" 2>&1> /dev/null)
+  errors=$($GCC "$source" -o "$name".out 2>&1> /dev/null)
 elif [ "$extension" == "cpp" ]; then
-  errors=$($GPP "$source" -o "$name" 2>&1> /dev/null)
+  errors=$($GPP "$source" -o "$name".out 2>&1> /dev/null)
 elif [ "$extension" == "java" ]; then
   errors=$(javac "$source" 2>&1> /dev/null)
 fi
@@ -80,7 +80,7 @@ fi
 # specify command and what file to execute
 if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
   command="./"
-  execute="$name"
+  execute="$name".out
 elif [ "$extension" == "java" ]; then
   command="java "
   execute=$name
@@ -263,7 +263,7 @@ cd ../../
 # if user has everything correct delete created object file
 if [ $allAccepted == true ]; then
   if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
-    rm "$name" 2> /dev/null
+    rm "$name".out 2> /dev/null
   elif [ "$extension" == "java" ]; then
     rm "$name.class"
   fi
