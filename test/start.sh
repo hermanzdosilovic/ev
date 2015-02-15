@@ -50,7 +50,7 @@ fi
 if [ ! -e "test/wa-leave/wa-leave.1.out.user" ]; then
   status=false
 fi
-if [ ! -e "wa-leave" ]; then
+if [ ! -e "wa-leave.out" ]; then
   status=false
 fi
 print-status $status
