@@ -45,64 +45,38 @@ extension=${source##*.}
 # get file name
 name=${source%%.*}
 
-# if no file found then cannot continue
-if [ "$source" == "" ]; then
-  echo "ev: no file for execution"
-  exit
-fi
+compile() {
+  # compile source if c, cpp or java file
+  if [ "$extension" == "c" ]; then
+    errors=$($GCC "$source" -o "$name".out 2>&1> /dev/null)
+  elif [ "$extension" == "cpp" ]; then
+    errors=$($GPP "$source" -o "$name".out 2>&1> /dev/null)
+  elif [ "$extension" == "java" ]; then
+    errors=$(javac "$source" 2>&1> /dev/null)
+  fi
 
-# if there is specified "compile and run" comment, then use it
-custom="$(cat "$source" | grep -E -m 1 "compile and run: " | cut -d ":" -f 2 | sed "s/\*\///;s/^ *//")"
-if [[ $custom != "" && $1 == "-r" ]]; then
-  echo " - $source -"
-  echo $custom | bash
-  exit
-fi
+  # if compile errors occurred then cannot continue
+  if [ "$errors" != "" ]; then
+    echo -e "${R}COMPILATION ERROR$NC"
+    echo "$errors"
+    exit
+  fi
 
-# compile source if c, cpp or java file
-if [ "$extension" == "c" ]; then
-  errors=$($GCC "$source" -o "$name".out 2>&1> /dev/null)
-elif [ "$extension" == "cpp" ]; then
-  errors=$($GPP "$source" -o "$name".out 2>&1> /dev/null)
-elif [ "$extension" == "java" ]; then
-  errors=$(javac "$source" 2>&1> /dev/null)
-fi
-
-# if compile errors occurred then cannot continue
-if [ "$errors" != "" ]; then
-  echo -e "${R}COMPILATION ERROR$NC"
-  echo "$errors"
-  exit
-elif [ "$extension" == "java" ]; then
-  cp "$name.class" "test/$name/"
-fi
-
-# specify command and what file to execute
-if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
-  command="./"
-  execute="$name".out
-elif [ "$extension" == "java" ]; then
-  command="java "
-  execute=$name
-elif [ "$extension" == "rb" ]; then
-  command="$RUBY "
-  execute="$source"
-else
-  command="$PYTHON "
-  execute="$source"
-fi
-
-# chech for fast run argument
-if [[ $1 == "-r" ]]; then
-  echo " - $source -"
-  $command"$execute"
-  exit
-elif [[ $1 != "" ]]; then
-  echo "ev: unknown argument $1"
-  exit
-elif [[ "$extension" != "java" ]]; then
-  execute="../../""$execute"
-fi
+  # specify command and what file to execute
+  if [ "$extension" == "c" ] || [ "$extension" == "cpp" ]; then
+    command="./"
+    execute="$name".out
+  elif [ "$extension" == "java" ]; then
+    command="java "
+    execute=$name
+  elif [ "$extension" == "rb" ]; then
+    command="$RUBY "
+    execute="$source"
+  else
+    command="$PYTHON "
+    execute="$source"
+  fi
+}
 
 # function removes blank lines and trailing spaces from given file
 remove-blanks() {
@@ -115,144 +89,233 @@ remove-blanks() {
   fi
 }
 
-echo " - $source -"
+run_tests() {
+  allAccepted=true
+  filter="^(.*\.|.{0})in(\..*|.{0})$"
+  replace="s/^in\./out./;s/\.in\./.out./;s/\.in$/.out/"
 
-# if there is no 'test' directory
-if [ ! -d "test/$name/" ]; then
-  echo "* created test/$name/"
-  mkdir -p "test/$name"
+  cd "test/$name/"
+  for fin in *; do
+    if [ "$(echo $fin | grep -E "$filter")" == "" ]; then
+      continue
+    fi
+
+    # from official input file make output file with same format
+    fout="$(echo $fin | sed $replace )"
+
+    remove-blanks "$fin"
+    # skip empty input file
+    if [ ! -s "$fin" ]; then
+      continue
+    fi
+
+    echo "* $fin:"
+
+    # remove blank lines from output file
+    if [ -e "$fout" ]; then
+      remove-blanks "$fout"
+    fi
+
+    compareResults=false
+
+    # remove old user out if exists
+    rm "$fout.user" 2> /dev/null
+
+    # by default output is console stdout
+    foutuser="/dev/stdout"
+
+    # if output file exists and is not empty, then output is to .user file
+    if [ -e "$fout" ] && [ -s "$fout" ]; then
+      foutuser="$fout.user"
+      compareResults=true
+    fi
+
+    # use user as stdin if '$' at beginning of .in file
+    if [ "$(cat "$fin" | head -n 1 | cut -c 1)" == "$" ]; then
+      fin="/dev/stdin"
+    fi
+
+    # use console stdout as output if '$' on beginning of output file
+    if [ -e "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "$" ]; then
+      compareResults=false
+      foutuser="/dev/stdout"
+    elif [ -e "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "!" ]; then
+      compareResults=false
+    fi
+
+    # if reading from file
+    if [ "$fin" != "/dev/stdin" ]; then
+      # Link file descriptor #6 with stdin
+      exec 6<&0
+      # Replace stdin with file
+      exec < "$fin"
+    fi
+
+    while read -r line; do
+      echo $line
+      if [ -z "$line" ]; then
+        break
+      fi
+    done | $command"$execute" > "$foutuser" &
+
+    # get pid of executed program
+    pid=$!
+
+    # wait ev input process to finish - ignoring input time
+    while ps -p $(($pid - 1)) > /dev/null; do continue; done;
+
+    if [ "$fin" != "/dev/stdin" ]; then
+      # Restore stdin from file descriptor #6 and close file descriptor #6
+      exec 0<&6 6<&-
+    fi
+
+    # measure time of running process
+    tle=false
+    start=$(date +%s)
+    while ps -p $pid > /dev/null; do
+      end=$(date +%s)
+      diff=$(($end - $start))
+      if [ "$diff" -gt "1" ]; then
+        kill -SIGKILL $pid
+        wait $! 2> /dev/null
+        echo -e "${Y}TIME LIMIT EXCEEDED$NC"
+        compareResults=false
+        allAccepted=false
+        tle=true
+        if [ "$foutuser" != "/dev/stdout" ]; then
+          rm "$foutuser"
+        fi
+      fi
+    done
+
+    # compare files if output is redirected to file
+    if [ $compareResults == true ]; then
+      remove-blanks "$foutuser"
+      cmp -s "$fout" "$foutuser"
+      if [ $? -eq 1 ]; then
+        echo -e "${R}WRONG ANSWER$NC"
+        echo -e "${GY}ev: check $foutuser for help$NC"
+        allAccepted=false
+      else
+        echo -e "${G}ACCEPTED$NC"
+        rm "$foutuser"
+      fi
+    elif [ "$foutuser" != "/dev/stdout" ] && [ $tle == false ]; then
+      echo -e "${GY}check $foutuser$NC"
+    fi
+
+    echo
+
+  done
+}
+
+fast_run() {
+  # if no file found then cannot continue
+  if [ "$source" == "" ]; then
+    echo "ev: no file for execution"
+    exit
+  fi
+
+  # if there is specified "compile and run" comment, then use it
+  custom="$(cat "$source" | grep -E -m 1 "compile and run: " | cut -d ":" -f 2 | sed "s/\*\///;s/^ *//")"
+  if [[ $custom != "" ]]; then
+    echo " - $source -"
+    echo $custom | bash
+  else
+    compile
+    echo " - $source -"
+    $command"$execute"
+  fi
+  exit
+}
+
+check_for_tests() {
+  # if there is no 'test' directory
+  if [ ! -d "test/$name/" ]; then
+    echo "* created test/$name/"
+    mkdir -p "test/$name"
+  fi
+
+  # check if tests exists
+  tests=$(ls "test/$name/" 2> /dev/null)
+  if [ "$tests" == "" ]; then
+    # create 2 input/output files
+    for case in {1..2}; do
+      touch "test/$name/$name.$case.in"
+      echo "* created test/$name/$name.$case.in"
+      touch "test/$name/$name.$case.out"
+      echo "* created test/$name/$name.$case.out"
+    done
+    exit
+  fi
+}
+
+project_run() {
+  source="$1"
+  if [[ ! -e $source ]]; then
+    echo "ev: no such file $source"
+    exit
+  fi
+
+  root_dir=${source%%/*}
+  name=${source%%.*}; name=${name##*/}
+
+  errors=$(javac "$root_dir"/*.java 2>&1> /dev/null)
+  if [[ $errors != "" ]]; then
+    echo -e "${R}COMPILATION ERROR$NC"
+    echo "$errors"
+    exit
+  fi
+
+  check_for_tests
+
+  cp $root_dir/*.class "test/$name/"
+
+  command="java "
+  execute="$name"
+
+  echo " - $source -"
+
+  run_tests
+
+  cd ../../
+
+  if [ $allAccepted == true ]; then
+    rm $root_dir/*.class
+  fi
+
+  rm test/"$name"/*.class
+
+  exit
+}
+
+if [[ $1 == "-r" ]]; then
+  fast_run
+elif [[ $1 != "" ]]; then
+  project_run $1
 fi
 
-# check if tests exists
-tests=$(ls "test/$name/" 2> /dev/null)
-if [ "$tests" == "" ]; then
-  # create 2 input/output files
-  for case in {1..2}; do
-    touch "test/$name/$name.$case.in"
-    echo "* created test/$name/$name.$case.in"
-    touch "test/$name/$name.$case.out"
-    echo "* created test/$name/$name.$case.out"
-  done
+# if no file found then cannot continue
+if [ "$source" == "" ]; then
+  echo "ev: no file for execution"
   exit
 fi
 
-allAccepted=true
-filter="^(.*\.|.{0})in(\..*|.{0})$"
-replace="s/^in\./out./;s/\.in\./.out./;s/\.in$/.out/"
+compile
 
-cd "test/$name/"
-for fin in *; do
-  if [ "$(echo $fin | grep -E "$filter")" == "" ]; then
-    continue
-  fi
+if [[ "$extension" != "java" ]]; then
+  execute="../../""$execute"
+fi
 
-  # from official input file make output file with same format
-  fout="$(echo $fin | sed $replace )"
+echo " - $source -"
 
-  remove-blanks "$fin"
-  # skip empty input file
-  if [ ! -s "$fin" ]; then
-    continue
-  fi
+check_for_tests
 
-  echo "* $fin:"
+if [ "$extension" == "java" ]; then
+  cp "$name.class" "test/$name/"
+fi
 
-  # remove blank lines from output file
-  if [ -e "$fout" ]; then
-    remove-blanks "$fout"
-  fi
-
-  compareResults=false
-
-  # remove old user out if exists
-  rm "$fout.user" 2> /dev/null
-
-  # by default output is console stdout
-  foutuser="/dev/stdout"
-
-  # if output file exists and is not empty, then output is to .user file
-  if [ -e "$fout" ] && [ -s "$fout" ]; then
-    foutuser="$fout.user"
-    compareResults=true
-  fi
-
-  # use user as stdin if '$' at beginning of .in file
-  if [ "$(cat "$fin" | head -n 1 | cut -c 1)" == "$" ]; then
-    fin="/dev/stdin"
-  fi
-
-  # use console stdout as output if '$' on beginning of output file
-  if [ -e "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "$" ]; then
-    compareResults=false
-    foutuser="/dev/stdout"
-  elif [ -e "$fout" ] && [ "$(cat "$fout" | head -n 1 | cut -c 1)" == "!" ]; then
-    compareResults=false
-  fi
-
-  # if reading from file
-  if [ "$fin" != "/dev/stdin" ]; then
-    # Link file descriptor #6 with stdin
-    exec 6<&0
-    # Replace stdin with file
-    exec < "$fin"
-  fi
-
-  while read -r line; do
-    echo $line
-    if [ -z "$line" ]; then
-      break
-    fi
-  done | $command"$execute" > "$foutuser" &
-
-  # get pid of executed program
-  pid=$!
-
-  # wait ev input process to finish - ignoring input time
-  while ps -p $(($pid - 1)) > /dev/null; do continue; done;
-
-  if [ "$fin" != "/dev/stdin" ]; then
-    # Restore stdin from file descriptor #6 and close file descriptor #6
-    exec 0<&6 6<&-
-  fi
-
-  # measure time of running process
-  tle=false
-  start=$(date +%s)
-  while ps -p $pid > /dev/null; do
-    end=$(date +%s)
-    diff=$(($end - $start))
-    if [ "$diff" -gt "1" ]; then
-      kill -SIGKILL $pid
-      wait $! 2> /dev/null
-      echo -e "${Y}TIME LIMIT EXCEEDED$NC"
-      compareResults=false
-      allAccepted=false
-      tle=true
-      if [ "$foutuser" != "/dev/stdout" ]; then
-        rm "$foutuser"
-      fi
-    fi
-  done
-
-  # compare files if output is redirected to file
-  if [ $compareResults == true ]; then
-    remove-blanks "$foutuser"
-    cmp -s "$fout" "$foutuser"
-    if [ $? -eq 1 ]; then
-      echo -e "${R}WRONG ANSWER$NC"
-      echo -e "${GY}ev: check $foutuser for help$NC"
-      allAccepted=false
-    else
-      echo -e "${G}ACCEPTED$NC"
-      rm "$foutuser"
-    fi
-  elif [ "$foutuser" != "/dev/stdout" ] && [ $tle == false ]; then
-    echo -e "${GY}check $foutuser$NC"
-  fi
-
-  echo
-
-done
+run_tests
 
 if [ "$extension" == "java" ]; then
   rm "$name.class"
