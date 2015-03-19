@@ -38,6 +38,10 @@ if [ "$EVC" == "true" ]; then
   GY="\033[0;37m" # light gray
 fi
 
+if [[ ! $EVT =~ ^[1-9][0-9]*$ ]]; then
+  EVT="1"
+fi
+
 # find last modified .c, .cpp, .py, .rb or .java file
 source=$(ls -tr *.{c,cpp,rb,py,java} 2> /dev/null | tail -n -1)
 # get file extension
@@ -175,7 +179,7 @@ run_tests() {
     while ps -p $pid > /dev/null; do
       end=$(date +%s)
       diff=$(($end - $start))
-      if [ "$diff" -gt "1" ]; then
+      if [ "$diff" -gt "$EVT" ]; then
         kill -SIGKILL $pid
         wait $! 2> /dev/null
         echo -e "${Y}TIME LIMIT EXCEEDED$NC"
