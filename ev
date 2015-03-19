@@ -284,9 +284,7 @@ project_run() {
 
   cd ../../
 
-  if [ $allAccepted == true ]; then
-    rm $root_dir/*.class
-  fi
+  rm $root_dir/*.class
 
   rm test/"$name"/*.class
 
