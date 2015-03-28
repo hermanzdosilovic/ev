@@ -173,6 +173,9 @@ run_tests() {
 
     # get memory usage
     memory=$(ps -p $pid -o %mem | sed 1d | sed 's/ //')
+    if [[ $memory == "" ]]; then
+      memory="0"
+    fi
 
     if [ "$fin" != "/dev/stdin" ]; then
       # Restore stdin from file descriptor #6 and close file descriptor #6
@@ -183,10 +186,10 @@ run_tests() {
     tle=false
     start=$(date +%s%N)
     end=$(date +%s%N)
-    diff=$(bc <<< "scale=2; ($end - $start)/1000000000" | sed 's/^\./0./')
+    diff=$(bc <<< "scale=6; ($end - $start)/1000000000" | sed 's/^\./0./')
     while ps -p $pid > /dev/null; do
       end=$(date +%s%N)
-      diff=$(bc <<< "scale=2; ($end - $start)/1000000000" | sed 's/^\./0./')
+      diff=$(bc <<< "scale=6; ($end - $start)/1000000000" | sed 's/^\./0./')
       new_memory=$(ps -p $pid -o %mem | sed 1d | sed 's/ //')
       if [[ $new_memory != "" && $(bc <<< "$new_memory > $memory") == 1 ]]; then
         memory=$new_memory
@@ -195,7 +198,7 @@ run_tests() {
       if [[ $(bc <<< "$diff > $EVT") == 1 ]]; then
         kill -SIGKILL $pid &> /dev/null
         wait $! &> /dev/null
-        memory=$(bc <<< "$total_memory*$memory/102400")
+        memory=$(bc <<< "scale=6; $total_memory*$memory/102400" | sed 's/^\./0./')
         echo -e "${Y}TIME LIMIT EXCEEDED$NC"
         echo -e "~${C}${diff}s$NC ~${C}${memory}MB$NC"
         compareResults=false
@@ -208,7 +211,7 @@ run_tests() {
       fi
     done
 
-    memory=$(bc <<< "$total_memory*$memory/102400")
+    memory=$(bc <<< "scale=6; $total_memory*$memory/102400" | sed 's/^\./0./')
     # compare files if output is redirected to file
     if [ $compareResults == true ]; then
       remove-blanks "$foutuser"
