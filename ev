@@ -87,10 +87,10 @@ compile() {
 remove-blanks() {
   if [[ "$OSTYPE" == "darwin"* ]]; then
     sed -i "" 's/[[:space:]]*$//' "$1"
-    sed -i "" '/^[[:space:]]*$/d' "$1"
+    sed -i "" -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$1"
   else
     sed -i 's/[[:space:]]*$//' "$1"
-    sed -i '/^[[:space:]]*$/d' "$1"
+    sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$1"
   fi
 }
 
@@ -160,9 +160,6 @@ run_tests() {
 
     while read -r line; do
       echo $line
-      if [ -z "$line" ]; then
-        break
-      fi
     done | $command"$execute" > "$foutuser" &
 
     # get pid of executed program
