@@ -252,46 +252,56 @@ check_for_tests() {
 }
 
 project_run() {
-  source="$1"
-  if [[ ! -e $source ]]; then
-    echo "ev: no such file $source"
-    exit
+  if [[ $1 == "java" ]]; then
+    source="$2"
+    if [[ ! -e $source ]]; then
+      echo "ev: no such file $source"
+      exit
+    fi
+
+    root_dir=${source%%/*}
+    name=${source%%.*}; name=${name##*/}
+
+    errors=$(javac "$root_dir"/*.java 2>&1> /dev/null)
+    if [[ $errors != "" ]]; then
+      echo -e "${R}COMPILATION ERROR$NC"
+      echo "$errors"
+      exit
+    fi
+
+
+    check_for_tests
+
+    cp $root_dir/*.class "test/$name/"
+
+    command="java "
+    execute="$name"
+
+    echo " - $source -"
+
+    run_tests
+
+    cd ../../
+
+    rm $root_dir/*.class
+
+    rm test/"$name"/*.class
+  elif [[ $1 == "cpp" ]]; then
+    source="$2"
+    name=${source##*/}
+    command="./../../"
+    execute="$2"
+    echo " - $source -"
+    run_tests
   fi
-
-  root_dir=${source%%/*}
-  name=${source%%.*}; name=${name##*/}
-
-  errors=$(javac "$root_dir"/*.java 2>&1> /dev/null)
-  if [[ $errors != "" ]]; then
-    echo -e "${R}COMPILATION ERROR$NC"
-    echo "$errors"
-    exit
-  fi
-
-  check_for_tests
-
-  cp $root_dir/*.class "test/$name/"
-
-  command="java "
-  execute="$name"
-
-  echo " - $source -"
-
-  run_tests
-
-  cd ../../
-
-  rm $root_dir/*.class
-
-  rm test/"$name"/*.class
 
   exit
 }
 
 if [[ $1 == "-r" ]]; then
   fast_run
-elif [[ $1 != "" ]]; then
-  project_run $1
+elif [[ $1 == "-p" ]]; then
+  project_run $2 $3
 fi
 
 # if no file found then cannot continue
