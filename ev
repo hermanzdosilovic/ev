@@ -1,17 +1,20 @@
 #!/usr/bin/python
 
-import sys
 import os
+import subprocess
+import sys
 
 def compile(file_name, problem_name, file_type):
+    command = ""
     if file_type == "c":
-        os.system("gcc " + file_name + " -o " + problem_name)
+        command = ' '.join(['gcc', file_name, '-o', problem_name])
     elif file_type == "cpp":
-        os.system("g++ " + file_name + " -o " + problem_name)
+        command = ' '.join(['g++', file_name, '-o', problem_name])
     elif file_type == "java":
-        os.system("javac " + file_name)
+        command = ' '.join(['javac', file_name])
     else:
-        pass
+        command = ' '.join(['ruby', file_name])
+    return subprocess.check_output(command, shell = True)
 
 argument = sys.argv[1]
 if not os.path.isfile(argument):
@@ -27,4 +30,4 @@ if file_type not in supported_files:
     print "Language not supported"
     sys.exit(1)
 
-compile(argument, problem_name, file_type)
+print compile(argument, problem_name, file_type)
