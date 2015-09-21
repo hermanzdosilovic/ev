@@ -1,39 +1,30 @@
 #!/usr/bin/python
 
-# importi
 import sys
 import os
 
-
-def compile(argument, file_name, file_type):
-    if (file_type == "c"):
-        os.system("gcc " + argument + " -o " + file_name)
-    elif (file_type == "cpp"):
-        os.system("g++ " + argument + " -o " + file_name)
-    elif (file_type == "java"):
-        os.system("javac " + argument)
+def compile(file_name, problem_name, file_type):
+    if file_type == "c":
+        os.system("gcc " + file_name + " -o " + problem_name)
+    elif file_type == "cpp":
+        os.system("g++ " + file_name + " -o " + problem_name)
+    elif file_type == "java":
+        os.system("javac " + file_name)
     else:
         pass
 
-
-# pogledaj dal file postoji
 argument = sys.argv[1]
-file_status = os.path.isfile(argument)
-if not file_status:
+if not os.path.isfile(argument):
     print "No such file!"
     sys.exit(1)
 
-# rascepaj ime da se sazna <ime>.<whatever>.<lang>
 file_name_struct = argument.split(".")
+problem_name = file_name_struct[0]
 file_type = file_name_struct[-1]
 
-# ako lang nije podrzan onda baci error
 supported_files = ["c", "cpp", "py", "rb", "java"]
 if file_type not in supported_files:
     print "Language not supported"
     sys.exit(1)
 
-
-# kompajliraj kod ako treba
-file_name = file_name_struct[0]
-compile(argument, file_name, file_type)
+compile(argument, problem_name, file_type)
