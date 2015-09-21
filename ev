@@ -14,7 +14,14 @@ def compile(file_name, problem_name, file_type):
         command = ' '.join(['javac', file_name])
     else:
         command = ' '.join(['ruby', file_name])
-    return subprocess.check_output(command, shell = True)
+
+    compile_status = ""
+    try:
+        compile_status = subprocess.check_output(command, shell = True)
+    except subprocess.CalledProcessError:
+        pass
+    finally:
+        return compile_status
 
 argument = sys.argv[1]
 if not os.path.isfile(argument):
