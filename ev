@@ -19,6 +19,19 @@ def compile(file_name, problem_name, file_type):
     except subprocess.CalledProcessError:
         sys.exit(1)
 
+
+def run(file_name, problem_name, file_type):
+    if file_type == "c" or file_type == "cpp":
+        subprocess.call("./" + problem_name)
+    elif file_type == "java":
+        subprocess.call(["java", problem_name])
+    elif file_type == "py":
+        subprocess.call(["python", file_name])
+    elif file_type == "rb":
+        subprocess.call(["ruby", file_name])
+    else:
+        pass
+
 argument = sys.argv[1]
 if not os.path.isfile(argument):
     print "No such file!"
@@ -34,3 +47,4 @@ if file_type not in supported_languages:
     sys.exit(1)
 
 compile(argument, problem_name, file_type)
+run(argument, problem_name, file_type)
