@@ -1,4 +1,4 @@
-ev
+ev [![Code Climate](https://codeclimate.com/github/hermanzdosilovic/ev/badges/gpa.svg)](https://codeclimate.com/github/hermanzdosilovic/ev)
 ==
 
 Smart tool for task testing in Competitive Programming.
