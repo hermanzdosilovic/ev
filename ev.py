@@ -7,7 +7,7 @@ import sys
 
 def compile(file_name, problem_name, file_type):
     if file_type == "c":
-        command = ' '.join(['gcc', file_name, '-o', problem_name])
+        command = ' '.join(['gcc -ansi -Wall', file_name, '-o', problem_name])
     elif file_type == "cpp":
         command = ' '.join(['g++', file_name, '-o', problem_name])
     elif file_type == "java":
@@ -16,9 +16,13 @@ def compile(file_name, problem_name, file_type):
         command = ""
 
     try:
-        subprocess.check_output(command, shell=True)
-    except subprocess.CalledProcessError:
-        sys.exit(1)
+        return subprocess.check_output(
+            command,
+            stderr=subprocess.STDOUT,
+            shell=True
+        )
+    except subprocess.CalledProcessError as e:
+        raise Exception(e.output)
 
 
 def run(file_name, problem_name, file_type):
@@ -33,6 +37,10 @@ def run(file_name, problem_name, file_type):
 
 
 def main():
+    if len(sys.argv) == 1:
+        print 'No file given!'
+        sys.exit(1)
+
     argument = sys.argv[1]
     if not os.path.isfile(argument):
         print "No such file!"
@@ -47,7 +55,12 @@ def main():
         print "Language not supported"
         sys.exit(1)
 
-    compile(argument, problem_name, file_type)
+    try:
+        compile(argument, problem_name, file_type)
+    except Exception as e:
+        print e
+        sys.exit(1)
+
     run(argument, problem_name, file_type)
 
 
