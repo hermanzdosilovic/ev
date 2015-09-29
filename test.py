@@ -2,9 +2,6 @@
 
 import unittest
 import pdb
-
-from sys import path
-path.append("..")
 import ev
 
 
