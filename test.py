@@ -1,20 +1,39 @@
 #!/usr/bin/env python
 
-import unittest
-import pdb
 import ev
+import mock
+import pdb
+import subprocess
+import unittest
 
 
-class SimpleEvTest(unittest.TestCase):
+class SimpleCEvTest(unittest.TestCase):
     def setUp(self):
-        self.c_file_name = "hello.c"
-        self.c_problem_name = "hello"
-        self.c_file_type = "c"
+        self.valid_c_file_name = "hello.c"
+        self.valid_c_problem_name = "hello"
+        self.valid_c_file_type = "c"
 
-class EvTest(SimpleEvTest):
-    def test_compile_with_gcc(self):
+        self.invalid_c_file_name = "hello.cpp"
+        self.invalid_c_problem_name = "hello"
+        self.invalid_c_file_type = "cpp"
+
+
+class CEvTest(SimpleCEvTest):
+    def test_compile_with_gcc_invalid_params(self):
         with self.assertRaises(Exception):
-            ev.compile(self.c_file_name, self.c_problem_name, self.c_file_type)
+            ev.compile(
+                self.invalid_c_file_name,
+                self.invalid_c_problem_name,
+                self.invalid_c_file_type
+            )
+
+    def test_compile_with_gcc_valid_params(self):
+        subprocess.check_output = mock.MagicMock(return_value="")
+        self.assertEqual(ev.compile(
+            self.valid_c_file_name,
+            self.valid_c_problem_name,
+            self.valid_c_file_type
+        ), "")
 
 if __name__ == '__main__':
     unittest.main()
