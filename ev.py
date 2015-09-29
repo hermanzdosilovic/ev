@@ -1,9 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 import os
 import subprocess
 import sys
-
 
 def compile(file_name, problem_name, file_type):
     if file_type == "c":
