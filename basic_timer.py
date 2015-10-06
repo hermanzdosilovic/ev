@@ -1,3 +1,4 @@
+import ctypes
 import signal
 import timeit
 import os
@@ -37,6 +38,11 @@ class Tester:
         time_taken.value = timeit.default_timer() - start_time
         return
 
+    def kill(self, pid):
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.OpenProcess(1, 0, pid)
+        return (0 != kernel32.TerminateProcess(handle, 0))
+
     def start_test(self, command, in_file, out_file, user_out):
         child_pid = multiprocessing.Value('i', self.DEFAULT_INT)
         time_taken = multiprocessing.Value('d', self.DEFAULT_INT)
@@ -47,7 +53,10 @@ class Tester:
         if run_process.is_alive() == True: 
             run_process.terminate()
             if child_pid.value != -1:
-                os.kill(child_pid.value, signal.CTRL_BREAK_EVENT if ON_WINDOWS else signal.SIGTERM)
+                if ON_WINDOWS:
+                    kill(child_pid.value)
+                else:
+                    os.kill(child_pid.value, signal.SIGTERM)
         
         if time_taken.value != self.DEFAULT_INT and time_taken.value > self.timeout or time_taken.value == self.DEFAULT_INT:
             return Result(Result.TLE, time_taken.value)
