@@ -60,7 +60,7 @@ compile() {
   fi
 
   # if compile errors occurred then cannot continue
-  if [ "$errors" != "" ]; then
+  if [[ $? > 0 ]]; then
     echo -e "${R}COMPILATION ERROR$NC"
     echo "$errors"
     exit
