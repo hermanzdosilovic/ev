@@ -29,9 +29,6 @@ RUBY=ruby
 # specify your Python interpreter
 PYTHON=python
 
-# allways colorise
-EVC="true"
-
 # colors settings
 if [ "$EVC" == "true" ]; then
   NC="\033[0m" # no color
@@ -211,7 +208,7 @@ run_tests() {
     elif [ "$foutuser" != "/dev/stdout" ] && [ $tle == false ]; then
       echo -e "${GY}check $foutuser$NC"
     fi
-    
+
     echo
 
   done
