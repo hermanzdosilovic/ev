@@ -121,7 +121,6 @@ run_tests() {
     fi
 
     echo "* $fin:"
-    #cat $fin  # Ja dodao - Truba
 
     # remove blank lines from output file
     if [ -e "$fout" ]; then
@@ -205,7 +204,6 @@ run_tests() {
         echo -e "${R}WRONG ANSWER$NC"
         echo -e "${GY}ev: check $foutuser for help$NC"
         allAccepted=false
-      	#cat $foutuser  # Ja dodao - Truba
       else
         echo -e "${G}ACCEPTED$NC"
         rm "$foutuser"
