@@ -36,6 +36,7 @@ if [ "$EVC" == "true" ]; then
   G="\033[0;32m" # green
   Y="\033[0;33m" # yellow
   GY="\033[0;37m" # light gray
+  C="\033[36m" # cyan
 fi
 
 if [[ ! $EVT =~ ^[1-9][0-9]*$ ]]; then
@@ -101,6 +102,8 @@ run_tests() {
   allAccepted=true
   filter="^(.*\.|.{0})in(\..*|.{0})$"
   replace="s/^in\./out./;s/\.in\./.out./;s/\.in$/.out/"
+
+  total_memory=$(cat /proc/meminfo | grep MemTotal | cut -d " " -f 9)
 
   cd "test/$name/"
   for fin in *; do
@@ -169,6 +172,12 @@ run_tests() {
     # wait ev input process to finish - ignoring input time
     while ps -p $(($pid - 1)) > /dev/null; do continue; done;
 
+    # get memory usage
+    memory=$(ps -p $pid -o %mem | sed 1d | sed 's/ //')
+    if [[ $memory == "" ]]; then
+      memory="0"
+    fi
+
     if [ "$fin" != "/dev/stdin" ]; then
       # Restore stdin from file descriptor #6 and close file descriptor #6
       exec 0<&6 6<&-
@@ -176,33 +185,46 @@ run_tests() {
 
     # measure time of running process
     tle=false
-    start=$(date +%s)
+    start=$(date +%s%N)
+    end=$(date +%s%N)
+    diff=$(bc <<< "scale=6; ($end - $start)/1000000000" | sed 's/^\./0./')
     while ps -p $pid > /dev/null; do
-      end=$(date +%s)
-      diff=$(($end - $start))
-      if [ "$diff" -gt "$EVT" ]; then
-        kill -SIGKILL $pid
-        wait $! 2> /dev/null
+      end=$(date +%s%N)
+      diff=$(bc <<< "scale=6; ($end - $start)/1000000000" | sed 's/^\./0./')
+      new_memory=$(ps -p $pid -o %mem | sed 1d | sed 's/ //')
+      if [[ $new_memory != "" && $(bc <<< "$new_memory > $memory") == 1 ]]; then
+        memory=$new_memory
+      fi
+
+      if [[ $(bc <<< "$diff > $EVT") == 1 ]]; then
+        kill -SIGKILL $pid &> /dev/null
+        wait $! &> /dev/null
+        memory=$(bc <<< "scale=6; $total_memory*$memory/102400" | sed 's/^\./0./')
         echo -e "${Y}TIME LIMIT EXCEEDED$NC"
+        echo -e "~${C}${diff}s$NC ~${C}${memory}MB$NC"
         compareResults=false
         allAccepted=false
         tle=true
         if [ "$foutuser" != "/dev/stdout" ]; then
           rm "$foutuser"
         fi
+        break;
       fi
     done
 
+    memory=$(bc <<< "scale=6; $total_memory*$memory/102400" | sed 's/^\./0./')
     # compare files if output is redirected to file
     if [ $compareResults == true ]; then
       remove-blanks "$foutuser"
       cmp -s "$fout" "$foutuser"
       if [ $? -eq 1 ]; then
         echo -e "${R}WRONG ANSWER$NC"
+        echo -e "~${C}${diff}s$NC ~${C}${memory}MB$NC"
         echo -e "${GY}ev: check $foutuser for help$NC"
         allAccepted=false
       else
         echo -e "${G}ACCEPTED$NC"
+        echo -e "~${C}${diff}s$NC ~${C}${memory}MB$NC"
         rm "$foutuser"
       fi
     elif [ "$foutuser" != "/dev/stdout" ] && [ $tle == false ]; then
@@ -281,7 +303,9 @@ project_run() {
     command="java "
     execute="$name"
 
-    echo " - $source -"
+  echo " - $source -"
+  echo "Time limit: ${EVT}s"
+  echo
 
     run_tests
 
@@ -324,6 +348,8 @@ if [[ "$extension" != "java" ]]; then
 fi
 
 echo " - $source -"
+echo "Time limit: ${EVT}s"
+echo
 
 check_for_tests
 
