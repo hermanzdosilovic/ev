@@ -29,6 +29,9 @@ RUBY=ruby
 # specify your Python interpreter
 PYTHON=python
 
+# allways colorise
+EVC="true"
+
 # colors settings
 if [ "$EVC" == "true" ]; then
   NC="\033[0m" # no color
@@ -118,6 +121,7 @@ run_tests() {
     fi
 
     echo "* $fin:"
+    #cat $fin  # Ja dodao - Truba
 
     # remove blank lines from output file
     if [ -e "$fout" ]; then
@@ -160,7 +164,7 @@ run_tests() {
     fi
 
     while read -r line; do
-      echo $line
+      echo "$line"
     done | $command"$execute" > "$foutuser" &
 
     # get pid of executed program
@@ -201,6 +205,7 @@ run_tests() {
         echo -e "${R}WRONG ANSWER$NC"
         echo -e "${GY}ev: check $foutuser for help$NC"
         allAccepted=false
+      	#cat $foutuser  # Ja dodao - Truba
       else
         echo -e "${G}ACCEPTED$NC"
         rm "$foutuser"
@@ -208,7 +213,7 @@ run_tests() {
     elif [ "$foutuser" != "/dev/stdout" ] && [ $tle == false ]; then
       echo -e "${GY}check $foutuser$NC"
     fi
-
+    
     echo
 
   done
