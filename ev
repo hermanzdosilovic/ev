@@ -29,6 +29,9 @@ RUBY=ruby
 # specify your Python interpreter
 PYTHON=python
 
+# specify your Bash interpreter
+BASH=bash
+
 # colors settings
 if [ "$EVC" == "true" ]; then
   NC="\033[0m" # no color
@@ -81,8 +84,11 @@ compile() {
   elif [ "$extension" == "rb" ]; then
     command="$RUBY "
     execute="$source"
-  else
+  elif [ "$extension" == "py" ]; then
     command="$PYTHON "
+    execute="$source"
+  else
+    command="$BASH "
     execute="$source"
   fi
 }
